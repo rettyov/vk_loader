@@ -7,5 +7,7 @@ if __name__ == '__main__':
     links = load_csv()
     vk = Vk(configs).log_in()
     data = get_data(vk, links)
-    print(data)
+    print(data[0]['counters']['photos']['items'][-1]['id'])
+    print(data[0]['counters']['photos']['items'][-1]['comments'])
+    # ToDo: add async!
 
