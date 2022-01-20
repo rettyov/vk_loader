@@ -12,9 +12,12 @@ def load_configs(auth_path='./configs/auth.yaml'):
     configs['auth'] = config
     return configs
 
+
 def load_csv(csv_path='./configs/links.csv'):
     links = []
     with open(csv_path, "r") as f:
         for line in f.readlines():
-            links.append(line[:-1])
+            line = line.replace('\n', '')
+            if line:
+                links.append(line)
     return links
