@@ -1,4 +1,0 @@
-vk_api
-tqdm~=4.62.3
-
-pyyaml~=5.4.1
