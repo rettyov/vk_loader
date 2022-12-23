@@ -4,22 +4,11 @@ from typing import List
 from config.config import api
 
 
-def get_max_size_index(sizes):
-    max_height = 0
-    best_index = 0
-    for i, size in enumerate(sizes):
-        if size.height > max_height:
-            max_height = size.height
-            best_index = i
-    return best_index
-
-
-def get_photo_urls(message, urls: List[str]) -> List[str]:
+def get_photo_urls(message, urls: List[List[str]]) -> List[List[str]]:
     for attachment in message.attachments:
         if attachment.photo:
-            # todo: переделать на питоновский max
-            max_size_index = get_max_size_index(attachment.photo.sizes)
-            urls.append(attachment.photo.sizes[max_size_index].url)
+            sorted_photos = sorted(attachment.photo.sizes, key=lambda x: x.height, reverse=True)
+            urls.append([photo.url for photo in sorted_photos])
 
     if message.fwd_messages:
         for fwd_message in message.fwd_messages:
@@ -29,6 +18,18 @@ def get_photo_urls(message, urls: List[str]) -> List[str]:
         urls = get_photo_urls(message.reply_message, urls)
 
     return urls
+
+
+async def get_attachments(message):
+    # message не всегда включает весь контент для сообщений
+    # поэтому используем get_by_id, чтобы получить message наверняка
+    msg = await api.messages.get_by_id(message.id)
+
+    photo_urls = []
+    for item in msg.items:
+        photo_urls = get_photo_urls(item, photo_urls)
+
+    return {'photo': photo_urls}
 
 
 async def get_save_path(message):

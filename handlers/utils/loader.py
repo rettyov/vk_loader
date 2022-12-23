@@ -1,22 +1,36 @@
 import os
-from typing import List
+from typing import List, Dict
 import urllib
 
 
-def save_attachments(urls: List[str], save_path: str, part: str = 'photo'):
-    save_photo_path = os.path.join(save_path, part)
-    os.makedirs(save_photo_path, exist_ok=True)
+async def save_attachments(attachments: Dict[str, List[List[str]]], save_path: str):
+    result = {}
+    for part, all_available_urls in attachments.items():
+        save_part_path = os.path.join(save_path, part)
+        os.makedirs(save_part_path, exist_ok=True)
 
-    exist_files = os.listdir(save_photo_path)
-    image_names = [url.split('?')[0].split('/')[-1] for url in urls]
+        exist_files = os.listdir(save_part_path)
+        file_names = [urls[0].split('?')[0].split('/')[-1] for urls in all_available_urls]
 
-    unique_image_names, unique_urls = [], []
-    for url, image_name in zip(urls, image_names):
-        if image_name not in exist_files:
-            unique_image_names.append(image_name)
-            unique_urls.append(url)
+        unique_file_names, unique_urls = [], []
+        for file_name, urls in zip(file_names, all_available_urls):
+            if file_name in unique_file_names or file_name in exist_files:
+                continue
+            unique_file_names.append(file_name)
+            unique_urls.append(urls)
 
-    for i, (url, image_name) in enumerate(zip(unique_urls, unique_image_names)):
-        image_path = os.path.join(save_photo_path, image_name)
-        local_filename, headers = urllib.request.urlretrieve(url, image_path)
+        success_load = 0
+        # В каждом urls содержится отсортированный список ссылок по доступным размерам
+        for file_name, urls in zip(unique_file_names, unique_urls):
+            file_path = os.path.join(save_part_path, file_name)
 
+            for url in urls:
+                try:
+                    local_filename, headers = urllib.request.urlretrieve(url, file_path)
+                    success_load += 1
+                    break
+                except:
+                    continue
+
+        result[part] = success_load
+    return result
